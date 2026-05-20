@@ -1,1 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#1a6b45" />
+  <meta name="description" content="Your local guide to Anna Maria Island — dining, drinks, live music, activities, rentals, and more." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="AMI Concierge" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>Anna Maria Island Concierge</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f4f1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 480px;
+      height: 100vh;
+      height: -webkit-fill-available;
+      background: #fff;
+      box-shadow: 0 0 40px rgba(0,0,0,0.12);
+    }
+
+    #header {
+      background: #1a6b45;
+      padding: 16px 18px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      padding-top: max(16px, env(safe-area-inset-top));
+    }
+
+    #header-icon { font-size: 26px; }
+
+    #header-text h1 {
+      color: #fff;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+
+    #header-text p {
+      color: rgba(255,255,255,0.72);
+      font-size: 11.5px;
+      margin-top: 1px;
+    }
+
+    #category-bar {
+      display: flex;
+      gap: 7px;
+      padding: 10px 14px;
+      overflow-x: auto;
+      flex-shrink: 0;
+      border-bottom: 1px solid #e8ede9;
+      background: #f7faf8;
+      scrollbar-width: none;
+    }
+    #category-bar::-webkit-scrollbar { display: none; }
+
+    .cat-btn {
+      white-space: nowrap;
+      padding: 6px 13px;
+      border-radius: 20px;
+      border: 1px solid #c8d8cc;
+      background: #fff;
+      color: #4a6b52;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .cat-btn.active {
+      background: #1a6b45;
+      color: #fff;
+      border-color: #1a6b45;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .msg {
+      max-width: 88%;
+      padding: 11px 14px;
+      border-radius: 16px;
+      font-size: 14.5px;
+      line-height: 1.65;
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      background: #1a6b45;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg.bot {
+      align-self: flex-start;
+      background: #f2f6f3;
+      color: #1a1a1a;
+      border-bottom-left-radius: 4px;
+      border: 1px solid #e0ebe2;
+    }
+
+    .msg.bot strong { color: #1a6b45; }
+
+    .typing {
+      align-self: flex-start;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      padding: 13px 16px;
+      background: #f2f6f3;
+      border: 1px solid #e0ebe2;
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+    }
+    .typing span {
+      width: 7px; height: 7px;
+      background: #1a6b45;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+      opacity: 0.6;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%,60%,100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+
+    #chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      padding: 4px 14px 10px;
+      flex-shrink: 0;
+    }
+
+    .chip {
+      padding: 6px 13px;
+      border-radius: 20px;
+      border: 1px solid #1a6b45;
+      color: #1a6b45;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      background: transparent;
+      transition: all 0.15s;
+    }
+    .chip:active { background: #1a6b45; color: #fff; }
+
+    #input-row {
+      display: flex;
+      gap: 9px;
+      padding: 10px 14px;
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+      border-top: 1px solid #e8ede9;
+      background: #fff;
+      flex-shrink: 0;
+    }
+
+    #user-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #c8d8cc;
+      border-radius: 22px;
+      font-size: 15px;
+      background: #f7faf8;
+      color: #1a1a1a;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    #user-input:focus { border-color: #1a6b45; background: #fff; }
+
+    #send-btn {
+      padding: 10px 18px;
+      background: #1a6b45;
+      color: #fff;
+      border: none;
+      border-radius: 22px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    #send-btn:active { background: #155a38; }
+
+    #install-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      background: #e8f5ee;
+      border-bottom: 1px solid #c2ddc9;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #1a6b45;
+      flex-shrink: 0;
+      gap: 10px;
+    }
+    #install-banner.show { display: flex; }
+    #install-btn {
+      background: #1a6b45;
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    #dismiss-btn {
+      background: none;
+      border: none;
+      color: #4a6b52;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 0 2px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <span id="header-icon">🌴</span>
+    <div id="header-text">
+      <h1>Anna Maria Island Concierge</h1>
+      <p>Dining · Drinks · Live Music · Activities · Rentals</p>
+    </div>
+  </div>
+
+  <div id="install-banner">
+    <span>📲 Add this app to your home screen!</span>
+    <button id="install-btn" onclick="installApp()">Install</button>
+    <button id="dismiss-btn" onclick="dismissBanner()">✕</button>
+  </div>
+
+  <div id="category-bar">
+    <button class="cat-btn active" onclick="setCategory(this,'all')">All</button>
+    <button class="cat-btn" onclick="setCategory(this,'dining')">Dining</button>
+    <button class="cat-btn" onclick="setCategory(this,'drinks')">Bars & Drinks</button>
+    <button class="cat-btn" onclick="setCategory(this,'music')">Live Music</button>
+    <button class="cat-btn" onclick="setCategory(this,'activities')">Activities</button>
+    <button class="cat-btn" onclick="setCategory(this,'water')">Water Tours</button>
+    <button class="cat-btn" onclick="setCategory(this,'rentals')">Rentals</button>
+    <button class="cat-btn" onclick="setCategory(this,'markets')">Markets</button>
+    <button class="cat-btn" onclick="setCategory(this,'around')">Getting Around</button>
+  </div>
+
+  <div id="messages">
+    <div class="msg bot">👋 Welcome to Anna Maria Island! I'm your local concierge — ask me anything about dining, bars, live music, mini golf, water tours, bike and golf cart rentals, farmers markets, beaches, and getting around. What can I help you with?</div>
+  </div>
+
+  <div id="chips">
+    <button class="chip" onclick="askChip('Best sunset spot for margaritas?')">Sunset margaritas</button>
+    <button class="chip" onclick="askChip('Where can we go for live music tonight?')">Live music</button>
+    <button class="chip" onclick="askChip('Where can my family go mini golfing?')">Mini golf</button>
+    <button class="chip" onclick="askChip('Where can I rent a golf cart?')">Golf cart rental</button>
+    <button class="chip" onclick="askChip('Best dolphin tour for families?')">Dolphin tours</button>
+    <button class="chip" onclick="askChip('When is the farmers market?')">Farmers markets</button>
+  </div>
+
+  <div id="input-row">
+    <input id="user-input" type="text" placeholder="Ask me anything about AMI…" onkeydown="if(event.key==='Enter')sendMsg()" />
+    <button id="send-btn" onclick="sendMsg()">Send</button>
+  </div>
+</div>
+
+<script>
+const KB = `You are a friendly, knowledgeable local concierge for Anna Maria Island (AMI), Florida. Give warm, specific, insider-quality answers. Never make things up — only use what is in this knowledge base. Keep answers conversational, helpful, and formatted in short paragraphs. Use line breaks between recommendations for readability.
+
+=== DINING — FINE DINING / UPSCALE ===
+Beach Bistro (6600 Gulf Dr N, Holmes Beach): James Beard-nominated, one of Florida's most celebrated restaurants. Candlelit tables steps from the Gulf. Known for rack of lamb, fresh Florida fish, chocolate obsession dessert. Book weeks ahead for weekends. Dressy casual.
+The Porch (5604 Gulf Dr, Holmes Beach): Intimate rooftop dining, stunning Gulf views. Fresh local seafood, craft cocktails. Reservations recommended. Smart casual.
+Salt Bar & Table (5315 Gulf Dr, Holmes Beach): Upscale coastal. Local fish, charcuterie boards, great wine list. Reservations recommended.
+Bridge Street Bistro (111 Bridge St, Bradenton Beach): Romantic, fresh seafood, great wine, live music some evenings. Dressy casual.
+Swordfish Grill (1200 Gulf Dr N, Bradenton Beach): Local favorite for fresh grouper, snapper, stone crabs in season. Waterfront deck.
+
+=== DINING — WATERFRONT / CASUAL SEAFOOD ===
+Sandbar Restaurant (100 Spring Ave, Anna Maria): ICONIC. Toes-in-sand Gulf dining. Must-try: fresh grouper, coconut shrimp, rum runners. Famous sunset guessing game — guess the exact sunset time and win a free dessert! Book well in advance for sunset seating. Casual.
+Ugly Grouper (5704 Marina Dr, Holmes Beach): Local favorite, waterfront on the bay. Best grouper sandwich on the island. Frozen drinks, Mermaid Mojito. Casual. No reservations.
+Tide Tables (111 Bridge St, Bradenton Beach): Dockside dining, marina views, fresh catch daily. Casual.
+Anna Maria Oyster Bar (multiple locations): Beloved local chain. Fresh oysters, steamed shrimp, grouper platters. Very casual, family-friendly.
+Annie's Bait Shop (4334 Gulf Dr, Holmes Beach): Quirky, beloved. Open-air, fish tacos, creative menu. A true island gem.
+Starfish Co. (Anna Maria): Seafood shack with great bay views. Fresh fish, clam chowder.
+
+=== DINING — CASUAL / FAMILY ===
+Slim's Place (9701 Gulf Dr, Anna Maria): Philly owners, legit Philly cheesesteaks. Also award-winning lobster mac & cheese, fish tacos, burgers, pizza. Phillies/Eagles sports bar. Happy hour 3-5pm daily. Very casual.
+Duffy's Tavern (5808 Marina Dr, Holmes Beach): CASH ONLY. CLOSED TUESDAYS. Best burgers on the island. Legendary local spot. No frills, all flavor.
+Skinny's Place (N Pine Ave, Anna Maria): Tiny island classic. Counter-service breakfast and lunch. Known for breakfast sandwiches.
+Poppo's Taqueria: Mexican street food. Build-your-own tacos, burritos, fresh salsas. Very affordable.
+Rock N Eggroll (5317 Gulf Dr, Holmes Beach): Filipino-American fusion. Lumpia, rice bowls, creative specials. Local cult favorite.
+Sushi Ramen AMI: Japanese ramen and sushi. Popular with locals.
+Mademoiselle Paris (9901 Gulf Dr, Anna Maria): French-inspired cafe. Crepes, quiche, pastries, espresso.
+
+=== DINING — BREAKFAST ===
+Ginny & Jane E's (9807 Gulf Dr, Anna Maria): Beloved breakfast in a historic cottage with a garden. Homemade everything. Lines form early — worth the wait.
+Toasted Mango Cafe (3602 E Bay Dr, Holmes Beach): Featured on Food Network. Best waffle in Florida. Creative breakfast menu.
+Cool Beans Cafe: Great local coffee and breakfast. Laid-back island vibe.
+The Donut Experiment: Build-your-own donuts with toppings. Fun for families.
+Skinny's Place: Quick counter-service breakfast, island institution.
+Mademoiselle Paris: French crepes, croissants, espresso.
+
+=== BARS, COCKTAILS & HAPPY HOUR ===
+Sandbar Restaurant (100 Spring Ave, Anna Maria): Best pure sunset views on AMI. Toes in sand, rum runners, tropical drinks. Sunset guessing game every evening — guess the exact sunset time, win a free dessert! Reservations recommended. Faces west — great sunset views.
+Wicked Cantina (5712 Marina Dr, Holmes Beach): BEST MARGARITAS on AMI. Frozen mango margaritas under $8. Happy hour 12-6pm daily: $7 house margaritas, $5 wines/well drinks, $1.75 select beers. Live music from ~4pm daily. Great grouper tacos. Gulf views, outdoor patio. Faces west — great sunset views.
+Kokonut Hut / Gulf Drive Cafe (3901 Gulf Dr, Holmes Beach): Iconic beachfront tiki bar. Rum runners in souvenir coconuts. Right on the beach. Dog-friendly. Nightly live music. Faces west — great sunset views.
+Beach House Restaurant (200 Gulf Dr N, Bradenton Beach): Gulf-view deck, citrus-infused margaritas. Upscale casual. Faces west — great sunset views.
+Hurricane Hanks (5317 Gulf Dr, Holmes Beach): Famous for Strawberry Margarita and Chambord Lemon Drop. Lively atmosphere.
+Island Time Bar & Grill (Bradenton Beach): $3 off margaritas, $2 off frozen drinks during happy hour. Nightly live music. Open-air patio steps from the sand.
+Bamboo Island Bar (Bridge St, Bradenton Beach): Popular Bridge Street bar. Great before or after dinner.
+Freckled Fin (Bridge St, Bradenton Beach): Irish pub. Karaoke Mondays, live music regularly, good craft beer, lively nightlife.
+Ugly Grouper: Frozen drinks, Mermaid Mojito, waterfront bay views. Live music regularly.
+Anchor Inn: Classic local dive bar. No-frills, come-as-you-are, pool table, jukebox, budget drinks. Beloved by locals.
+IMPORTANT: The Waterfront restaurant faces Tampa Bay (east side of island) — beautiful views but you watch the SUNRISE there, NOT the sunset. Do NOT recommend it for sunset views.
+
+BEST SUNSET COCKTAIL SPOTS (west-facing Gulf views):
+1. Sandbar — toes in sand, legendary sunsets, rum runners, sunset guessing game
+2. Wicked Cantina — best margaritas + live music daily from 4pm
+3. Kokonut Hut — tiki bar right on the beach, rum runners in coconuts, dog-friendly
+4. Beach House — citrus margaritas on a Gulf-view deck
+
+=== LIVE MUSIC ===
+Wicked Cantina: Live music daily from ~4pm. Best for happy hour + sunset + margaritas combo.
+Kokonut Hut: Nightly live music. Toes-in-the-sand tiki bar. Island and reggae vibes.
+Ugly Grouper: Rotating local musicians, entirely outdoor venue, family-friendly.
+Freckled Fin (Bridge St, Holmes Beach): Irish pub. Karaoke Mondays, live music regularly.
+Island Time Bar & Grill (Bradenton Beach): Nightly live music. Rock, reggae, pop rotating lineup. Open-air patio.
+Bridge Tender Inn & Dockside Bar (135 Bridge St, Bradenton Beach): Waterfront dockside bar. Live music, great Intracoastal views.
+The Doctor's Office: Intimate craft cocktail bar with local musicians. Unique cozy vibe.
+Blue Marlin Restaurant (Pine Ave, Anna Maria): Seafood plus live music events on historic Pine Avenue.
+The Center of Anna Maria Island (407 Magnolia Ave): Hosts the Bradenton Gulf Island Concert Series — has featured Marshall Tucker Band, The Grass Roots, and more. Check their calendar at centerami.org.
+AMI Beach Cafe (Manatee Public Beach): Live music nightly with beach views.
+NEARBY: Bradenton Riverwalk Amphitheater — free Music in the Park on Fridays in spring (6-8pm). About 10 miles from AMI. Bring chairs and leashed dogs welcome.
+TIP: Bridge Street in Bradenton Beach is the island's live music hub — multiple venues within walking distance of each other.
+
+=== MINI GOLF & FAMILY FUN ===
+The Fish Hole Miniature Golf (115 Bridge St, Bradenton Beach): ON THE ISLAND. 18-hole fishing-themed course. Lush landscaping, koi ponds (kids can feed the fish!), resident turtles, misters to stay cool, covered seating throughout. Under $10/person. Open 9am-10pm daily, last tee time 9:30pm. Right on historic Bridge Street — putt a round then grab dinner next door. TripAdvisor top 10 attraction on AMI.
+Smuggler's Cove Adventure Golf (Bradenton, short drive from AMI): Pirate-themed 18-hole course. Feed gators at the American alligator habitat! Ice cream on site. Great for older kids and families.
+Key Royale Golf Club (Anna Maria): Only full golf course ON the island. 9-hole, par 32 walking course. Good for all skill levels.
+
+=== BEACHES ===
+Bean Point (north tip, Anna Maria): Secluded gem. Where the Gulf meets Tampa Bay. Low crowds, dolphins frequent the area. Very limited parking — arrive early or bike/golf cart. Best sunset and sunrise views on AMI.
+Coquina Beach (south, Bradenton Beach): Popular, great for shell picking. Free parking (fills early). Wheelchair accessible. Dogs NOT allowed in Coquina Park.
+Manatee Public Beach (Holmes Beach): Most family-friendly. Cabanas, restrooms, showers, playground. Live music at AMI Beach Cafe nearby.
+Holmes Beach: Three miles of white sand. Easiest parking on the island.
+Cortez Beach: Quieter, about 2,000 feet of white sand.
+Bradenton Beach: Best for seashell picking alongside Coquina.
+Bayfront Park Beach (Anna Maria): Views of Sunshine Skyway Bridge and Egmont Key.
+TIP: Arrive by 8am for best parking. Use the free trolley to skip parking headaches entirely.
+
+=== WATER TOURS & ACTIVITIES ===
+DOLPHIN TOURS:
+Fun Boat Tours (Holmes Beach): Daily dolphin tours, sandbar trips, sunset cruises, private charters. "Dolphin and Donuts" morning tour (donuts and coffee included). "Dolphins and Drinks" midday tour (drinks included). 32-foot pontoon MOJOKEN seats 48.
+AMI Escapes: Private tours. 2-hour dolphin + sandbar tour with swim, snorkel, paddleboard, underwater scooters. 6-hour island-hopping to Egmont Key, Passage Key, Jewfish Key, Beer Can Island. Fully customized for your group.
+Captain Mike's (fishannamaria.com): 40+ years experience. Dolphin tours, sunset cruises, wildlife tours. The Black Pearl: 33ft pontoon with kitchen, bathroom, freshwater shower.
+Orca Pro Charters (Holmes Beach): Private family-friendly. Sunrise charters, dolphin encounters, island hopping, snorkeling, sunset cruises.
+Island Time Boat Tours: Private 2-4 hour tours. Captains Beth and Matt. Bring your own food and drinks.
+
+FISHING CHARTERS:
+Anna Maria Charters (annamariacharters.com): #1 rated on AMI. Inshore, nearshore, offshore, tarpon. Also snorkeling and Egmont/Shell Island day cruises. Target: redfish, snook, trout, grouper, snapper, tarpon.
+Captain Mike's: Inshore and offshore. Tampa Bay to Sarasota Bay to the Gulf.
+AMI Adventures (Captain Frank Jones): Banana boat rides, jet ski rentals, sailing, fishing, dolphin tours, sandbar tours. One-stop shop.
+
+KAYAKING & PADDLEBOARDING:
+Beach Bums (Pine Ave, Anna Maria): Kayak eco-tours through mangroves. Single/tandem kayaks from $35, paddleboards from $55. Guided tours $55/person.
+Clear Kayak Tours: Illuminated clear kayaks. Sunrise, sunset, and night tours. See marine life beneath you!
+
+PARASAILING:
+YOLO Adventures and Fly Anna Maria both offer parasailing 400ft above the Gulf. Dry ride or request a "dip" on the way back. Sea Rocket Gulf Coast Parasail also available.
+
+JET SKI / OTHER:
+AMI Adventures: Jet ski rentals, banana boat rides, sailing. Hourly, half-day, or full-day. Jet skis have waterproof speakers.
+
+SNORKELING & ISLAND HOPPING:
+AMI Escapes: Egmont Key, Passage Key, underwater scooters. Best for families.
+Anna Maria Charters: Day cruises to Egmont and Shell Islands.
+
+=== GOLF CART & BIKE RENTALS ===
+IMPORTANT: Must have personal auto insurance to rent a golf cart on AMI. Golf carts are street-legal throughout Anna Maria, Holmes Beach, Bradenton Beach, and Coquina Beach.
+
+GOLF CARTS:
+Beach Bums (Pine Ave, Anna Maria): Southern Living featured. Electric carts: 4-, 6-, and 8-passenger + LUX Cart. From $30/hour, also daily/3-day/weekly. Also rents bikes, kayaks, paddleboards.
+Robinhood Rentals (Anna Maria, 1 block from beach): Florida's largest on-island fleet. EZGO, Yamaha, Club Car. Gas and electric. No Worry Waiver $15 (no security deposit needed). Online booking.
+Fun and More Rentals (Holmes Beach): FREE delivery and pickup anywhere on AMI. Electric and gas carts. Also bikes, e-bikes, kayaks, beach chairs, baby supplies.
+Gulf Coast Carts: Daily, 3-day, weekly rentals. Bluetooth radios. Cart delivered waiting at your rental on arrival.
+Hodo's Rentals: Family-owned, voted Bradenton #1. Brand-new 2024-2025 carts. Lithium batteries, Bluetooth speakers, LED underglow lighting. 35-45 miles per charge. 4- and 6-seaters.
+Crabby Joe's Cart Rentals (crabbyjoescartrentals.com): Golf carts, bikes, kayaks, beach gear. Delivery available.
+Coconut Rentals (thecoconutrentals.com, 941-269-1080): Online booking, great for exploring at your own pace.
+
+BIKES:
+Beach Bums: From $3/hour, $15/day. Tandems, children's seats, e-bikes.
+Robinhood Rentals: Bikes, scooters, e-bikes.
+Fun and More Rentals: Family bikes, kid trailers, free helmet/lock/basket, free delivery.
+AMI Segway and Scooters: Segways, e-boards, e-trikes, electric bikes. Kids free ages 3-9.
+TIP: AMI is 7 miles long and very flat — perfect for biking. The free trolley has bike racks so you can combine both.
+
+=== FARMERS MARKETS ===
+City of Anna Maria Farmers Market: Corner of Pine Ave & N Bay Blvd, Anna Maria (also Roser Church, 512 Pine Ave). Every Tuesday, 8:30am-2pm. Season: October-May, weather permitting. Fresh SW Florida produce, baked goods, jams, honey, gourmet foods, local artisans, microgreens, kettle corn. Hosted by DBTB Juice Bar & Bakery and The Center of Anna Maria Island.
+Bridge Street Market (Bradenton Beach): 107 Bridge St. Every Sunday, 10am-3pm. Season: November-April. Local artwork, jewelry, produce, live music.
+Coquina Beach Market: 1800 S Gulf Dr, Bradenton Beach. Wednesday, Friday, Sunday, 10am-2pm. Season: October-June. Crepes, handmade apparel, produce, local crafts. Wheelchair accessible. ONLY beach market on AMI. Dogs not allowed in Coquina Park.
+NEARBY: Sarasota Farmers Market (1 N Lemon Ave): Year-round, Saturdays 7am-1pm, 80+ vendors, ~45 min from AMI.
+TIP: October-May is prime farmers market season on AMI. Tuesday City of Anna Maria market is easiest to reach on foot or by trolley.
+
+=== GETTING AROUND ===
+FREE TROLLEY:
+Completely free. Runs 365 days/year except: New Year's Day, Memorial Day, July 4th, Labor Day, Thanksgiving, Christmas.
+Hours: 6am-10:30pm. Every 20 min until 9pm, every 30 min until 10:30pm.
+Route: Full 7-mile island — Anna Maria City Pier (north) to Coquina Beach (south).
+Key stops: City Pier, Pine Ave, Holmes Beach Shopping Center, Manatee Public Beach, Bridge Street.
+Bike racks on board!
+Beach ConneXion Shuttle: Free from mainland — park at Manatee Ave & 75th St W (Kmart/Publix center), shuttle goes directly to Manatee Public Beach. Best way to avoid island parking entirely.
+
+PARKING TIPS:
+Arrive by 8am — parking fills fast in peak season (Dec-Apr, summer).
+Free parking: Coquina Beach lot, Holmes Beach street parking, Manatee Public Beach.
+Near Bridge Street: free lot on Highland Ave. After 4pm: free at City Hall and library.
+Sandbar and Beach House: valet ~$30/day (Beach House gives $10 dining credit with parking receipt).
+Best mainland strategy: park at Manatee Ave & 75th St W, take free Beach ConneXion Shuttle.
+In Town of Anna Maria: all four tires must be fully off pavement or you will get a ticket.
+
+GOLF CARTS & BIKES: Most popular way for vacationers to get around. Street-legal island-wide. Rentals from $30/hour.
+
+=== LOCAL TIPS ===
+AMI is about 7 miles long and 1 mile wide. It is meant to be explored slowly — embrace island time.
+No national chain restaurants on the island — everything is local and independent.
+Peak season: December-April (snowbird season) and summer school holidays. Expect waits at popular restaurants.
+Duffy's Tavern: CASH ONLY and CLOSED TUESDAYS — do not forget this!
+Sandbar: Book reservations well in advance, especially for sunset seating.
+Beach Bistro: Book weeks ahead for weekend reservations.
+Island vibe is "barefoot and salty" — even upscale restaurants are dressy-casual at most.
+Hurricane season: June-November. Always check weather forecasts before activities.
+If asked about something not covered here, say: "Great question! For the most current info I'd recommend checking with the Anna Maria Island Chamber of Commerce at annamariaislandchamber.org or calling ahead."`;
+
+const CHIPS = {
+  all: ['Best sunset spot for margaritas?','Where can we go for live music tonight?','Where can my family go mini golfing?','Where can I rent a golf cart?','Best dolphin tour for families?','When is the farmers market?'],
+  dining: ['Best grouper sandwich on AMI?','Where for a romantic dinner?','Family-friendly breakfast spots?','Best cheesesteak on the island?','Hidden gem restaurants?'],
+  drinks: ['Best margarita with a sunset view?','Happy hour deals?','Best tiki bar on the island?','Best cocktail bar on AMI?','Where for a cold beer after the beach?'],
+  music: ['Where is live music tonight?','Best spot for live music and drinks?','Any live music on the beach?','Karaoke on AMI?','Free outdoor concerts near AMI?'],
+  activities: ['Where to go mini golfing?','Best beaches for shelling?','Things to do with young kids?','Parasailing on AMI?','Best beaches on the island?'],
+  water: ['Best dolphin tour for kids?','Fishing charters for beginners?','Island-hopping day trip?','Kayak eco-tour options?','Sunset cruise recommendations?'],
+  rentals: ['Golf cart rental with delivery?','Bike rentals for the whole family?','Cheapest golf cart rental?','E-bike or scooter rentals?','Best rental company on AMI?'],
+  markets: ['When is the farmers market?','Is the Coquina Beach market open today?','What can I buy at the markets?','Bridge Street market hours?','Year-round markets near AMI?'],
+  around: ['How does the free trolley work?','Best parking tips for AMI?','Can I bike the whole island?','How to get to Bean Point?','How to get to AMI from the mainland?']
+};
+
+let history = [];
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').classList.add('show');
+});
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      document.getElementById('install-banner').classList.remove('show');
+    });
+  }
+}
+
+function dismissBanner() {
+  document.getElementById('install-banner').classList.remove('show');
+}
+
+function setCategory(btn, cat) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const chips = CHIPS[cat] || CHIPS.all;
+  document.getElementById('chips').innerHTML = chips.map(c =>
+    `<button class="chip" onclick="askChip('${c.replace(/'/g,"\\'")}')"> ${c}</button>`
+  ).join('');
+}
+
+function askChip(text) {
+  document.getElementById('user-input').value = text;
+  sendMsg();
+}
+
+async function sendMsg() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  const msgs = document.getElementById('messages');
+
+  const uDiv = document.createElement('div');
+  uDiv.className = 'msg user';
+  uDiv.textContent = text;
+  msgs.appendChild(uDiv);
+
+  const tDiv = document.createElement('div');
+  tDiv.className = 'typing';
+  tDiv.innerHTML = '<span></span><span></span><span></span>';
+  msgs.appendChild(tDiv);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  history.push({ role: 'user', content: text });
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': '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', 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: KB,
+        messages: history
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || "I'm having a little trouble connecting right now — please try again in a moment!";
+    history.push({ role: 'assistant', content: reply });
+    tDiv.remove();
+    const bDiv = document.createElement('div');
+    bDiv.className = 'msg bot';
+    bDiv.innerHTML = reply
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\n/g,'<br>')
+      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+    msgs.appendChild(bDiv);
+    msgs.scrollTop = msgs.scrollHeight;
+  } catch(e) {
+    tDiv.remove();
+    const eDiv = document.createElement('div');
+    eDiv.className = 'msg bot';
+    eDiv.textContent = 'Connection error — please try again!';
+    msgs.appendChild(eDiv);
+  }
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js');
+  });
+}
+</script>
+</body>
+</html>
